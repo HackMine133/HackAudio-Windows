@@ -9,26 +9,45 @@
     "start": "electron .",
     "dist": "electron-builder"
   },
-  "dependencies": {
-    "jsmediatags": "^3.9.7"
-  },
-  "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
-  },
   "build": {
     "appId": "com.hackaudio.app",
     "productName": "HackAudio",
+    "directories": {
+      "output": "dist"
+    },
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HackAudio"
+    },
     "fileAssociations": [
       {
-        "ext": ["mp3", "wav", "ogg", "flac", "m4a"],
+        "ext": [
+          "mp3",
+          "wav",
+          "ogg",
+          "flac",
+          "m4a"
+        ],
         "name": "Audio File",
-        "role": "Editor"
+        "description": "HackAudio Music File",
+        "role": "Editor",
+        "icon": "icon.ico",
+        "isPackage": true
       }
     ]
+  },
+  "dependencies": {
+    "jsmediatags": "^3.9.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
   }
 }

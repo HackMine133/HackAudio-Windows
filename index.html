@@ -2,215 +2,224 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>HackAudio Pro</title>
+    <title>HackAudio</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-shell">
-        
+    <div class="app-container">
         <div class="title-bar">
-            <div class="brand">
-                <i class="fas fa-wave-square"></i> HackAudio <span class="pro-badge">PRO</span>
-            </div>
+            <div class="title">HackAudio</div>
             <div class="window-controls">
-                <button id="btn-min"><i class="fas fa-minus"></i></button>
-                <button id="btn-max"><i class="fas fa-expand"></i></button>
-                <button id="btn-close" class="close"><i class="fas fa-times"></i></button>
+                <button id="btn-min" title="Свернуть"><i class="fas fa-minus"></i></button>
+                <button id="btn-max" title="Развернуть"><i class="fas fa-square"></i></button>
+                <button id="btn-close" title="Закрыть"><i class="fas fa-times"></i></button>
             </div>
         </div>
 
-        <div class="main-body">
-            <nav class="sidebar">
-                <div class="nav-group">
-                    <h3>Моя музыка</h3>
-                    <button class="nav-btn active" data-tab="library">
-                        <i class="fas fa-music"></i> Библиотека
-                    </button>
-                    <button class="nav-btn" data-tab="visualizer">
-                        <i class="fas fa-chart-bar"></i> Визуализатор
-                    </button>
-                    <button class="nav-btn" data-tab="jamendo">
-                        <i class="fas fa-globe"></i> Поиск Jamendo
-                    </button>
-                </div>
-
-                <div class="nav-group">
-                    <h3>Файлы</h3>
-                    <button class="nav-btn" id="add-folder-btn">
-                        <i class="fas fa-folder-plus"></i> Добавить файлы
-                    </button>
-                </div>
-
-                <div class="nav-bottom">
-                    <button class="nav-btn" data-tab="settings">
-                        <i class="fas fa-cog"></i> Настройки
-                    </button>
-                </div>
-            </nav>
-
-            <main class="content-area">
-                
-                <div id="tab-library" class="tab-content active">
-                    <div class="library-toolbar">
-                        <div class="search-bar">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="search-input" placeholder="Поиск в библиотеке...">
-                        </div>
-                        <div class="library-actions">
-                            <div class="filter-pills">
-                                <button class="pill active" data-filter="all">Все</button>
-                                <button class="pill" data-filter="favorites"><i class="fas fa-heart"></i> Избранное</button>
-                                <button class="pill" data-filter="recent"><i class="fas fa-history"></i> Недавние</button>
-                            </div>
-                            <div class="sort-controls">
-                                <span>Сортировка</span>
-                                <select id="sort-select">
-                                    <option value="added">По дате добавления</option>
-                                    <option value="name">По названию</option>
-                                    <option value="artist">По исполнителю</option>
-                                    <option value="album">По альбому</option>
-                                </select>
-                                <button id="sort-dir-btn" class="icon-btn sm" title="Порядок">
-                                    <i class="fas fa-sort-amount-down-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="playlist-header-row">
-                        <span class="col-idx">#</span>
-                        <span class="col-title">Название</span>
-                        <span class="col-artist">Исполнитель</span>
-                        <span class="col-album">Альбом</span>
-                        <span class="col-fav"><i class="fas fa-heart"></i></span>
-                    </div>
-                    
-                    <ul id="playlist-list" class="track-list">
-                        <div class="empty-state">
-                            <i class="fas fa-music"></i>
-                            <p>Перетащите музыку сюда или нажмите "Добавить"</p>
-                        </div>
-                    </ul>
-                </div>
-
-                <div id="tab-visualizer" class="tab-content">
-                    <canvas id="visualizer"></canvas>
-                </div>
-
-                <div id="tab-jamendo" class="tab-content">
-                    <div class="header-search">
-                        <div class="search-bar jamendo-bar">
-                            <i class="fas fa-cloud-music"></i>
-                            <input type="text" id="jamendo-input" placeholder="Найти песню в Jamendo (Enter)...">
-                            <button id="jamendo-search-btn">Найти</button>
-                        </div>
-                    </div>
-                    <div id="jamendo-results" class="jamendo-grid">
-                        <div class="empty-state">
-                            <i class="fab fa-jamendo"></i>
-                            <p>Введите запрос для поиска музыки</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-settings" class="tab-content">
-                    <h2>Настройки</h2>
-                    <div class="settings-grid">
-                        <div class="setting-card">
-                            <h3>Внешний вид</h3>
-                            <label class="toggle-row">
-                                <span>Светлая тема</span>
-                                <input type="checkbox" id="theme-checkbox">
-                            </label>
-                            <label class="toggle-row">
-                                <span>Авто-цвет (из обложки)</span>
-                                <input type="checkbox" id="autocolor-checkbox">
-                            </label>
-                        </div>
-
-                        <div class="setting-card">
-                            <h3>Аудио процессинг</h3>
-                            
-                            <div class="control-row">
-                                <label>Скорость воспроизведения (<span id="speed-val">1.0</span>x)</label>
-                                <input type="range" id="speed-slider" min="0.5" max="3.0" step="0.1" value="1.0">
-                            </div>
-                            
-                            <div class="control-row">
-                                <label>Усиление громкости (Gain: <span id="gain-val">100</span>%)</label>
-                                <input type="range" id="bonus-vol-slider" min="100" max="200" step="10" value="100">
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <h3>Эквалайзер</h3>
-                            <div class="control-row">
-                                <label>Низкие (Bass: <span id="bass-val">0</span>dB)</label>
-                                <input type="range" id="bass-slider" min="-12" max="12" step="1" value="0">
-                            </div>
-                            <div class="control-row">
-                                <label>Средние (Mid: <span id="mid-val">0</span>dB)</label>
-                                <input type="range" id="mid-slider" min="-12" max="12" step="1" value="0">
-                            </div>
-                            <div class="control-row">
-                                <label>Высокие (Treble: <span id="treble-val">0</span>dB)</label>
-                                <input type="range" id="treble-slider" min="-12" max="12" step="1" value="0">
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <h3>Пространство</h3>
-                            <div class="control-row">
-                                <label>Баланс (L/R: <span id="pan-val">0</span>)</label>
-                                <input type="range" id="pan-slider" min="-1" max="1" step="0.1" value="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-
-        <div class="player-bar">
+        <div class="main-display">
+            <canvas id="visualizer"></canvas>
             
-            <div class="now-playing">
-                <div class="cover-wrapper">
-                    <img id="player-cover" src="" alt="">
-                    <i id="player-default-icon" class="fas fa-music"></i>
-                </div>
-                <div class="track-info">
-                    <div id="player-title" class="title">Нет трека</div>
-                    <div id="player-artist" class="artist">---</div>
+            <div id="cover-art" style="display: none;">
+                <img id="cover-image" src="" alt="Cover" style="opacity: 0;">
+                <i id="default-icon" class="fas fa-music album-placeholder"></i>
+            </div>
+
+            <div id="video-container" style="display: none;">
+                <video id="main-video" controls></video>
+                <div class="video-controls-overlay">
+                     <button id="video-fullscreen-btn" class="vid-btn"><i class="fas fa-expand"></i> На весь экран</button>
+                     <button id="close-video-btn" class="vid-btn"><i class="fas fa-times"></i> Закрыть</button>
                 </div>
             </div>
 
-            <div class="player-controls-center">
-                <div class="buttons">
-                    <button id="shuffle-btn" class="icon-btn sm" title="Случайно"><i class="fas fa-random"></i></button>
-                    <button id="prev-btn" class="icon-btn"><i class="fas fa-step-backward"></i></button>
-                    <button id="play-pause-btn" class="play-fab"><i class="fas fa-play"></i></button>
-                    <button id="next-btn" class="icon-btn"><i class="fas fa-step-forward"></i></button>
-                    <button id="loop-btn" class="icon-btn sm" title="Повтор"><i class="fas fa-redo"></i></button>
+            <div id="eq-window" class="modal-window">
+                <div class="modal-header">
+                    <span>Эквалайзер</span>
+                    <button class="close-modal-btn" id="close-eq-btn"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="progress-container">
-                    <span id="current-time">0:00</span>
-                    <div class="progress-bar-wrapper" id="progress-wrapper">
-                        <div class="progress-fill" id="progress-fill"></div>
-                        <div class="progress-handle" id="progress-handle"></div>
+                <div class="eq-content">
+                    <select id="eq-presets">
+                        <option value="flat">Оригинал (Flat)</option>
+                        <option value="bass">Bass Boost</option>
+                        <option value="rock">Rock</option>
+                        <option value="pop">Pop</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="classical">Classical</option>
+                        <option value="vocal">Vocal Booster</option>
+                    </select>
+                    <div class="eq-sliders-container" id="eq-sliders">
+                        </div>
+                    <button id="save-eq-preset-btn" class="modal-action-btn primary">Сохранить пресет</button>
+                </div>
+            </div>
+
+            <div id="edit-window" class="modal-window">
+                <div class="modal-header">
+                    <span>Редактировать трек</span>
+                </div>
+                
+                <div class="edit-content-vertical">
+                    <div class="edit-cover-section">
+                        <img id="edit-cover-preview" src="" alt="Cover Preview">
+                        <button id="change-cover-btn" class="text-btn">Изменить обложку</button>
+                        <input type="file" id="edit-cover-input" accept="image/*" style="display: none;">
                     </div>
-                    <span id="total-time">0:00</span>
+
+                    <div class="input-group">
+                        <label>Название трека</label>
+                        <input type="text" id="edit-title-input" class="styled-input" placeholder="Введите название">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Исполнитель</label>
+                        <input type="text" id="edit-artist-input" class="styled-input" placeholder="Введите исполнителя">
+                    </div>
+
+                    <div class="edit-actions-row">
+                        <button id="cancel-edit-btn" class="modal-action-btn secondary">Отмена</button>
+                        <button id="save-edit-file-btn" class="modal-action-btn primary">Сохранить как...</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="player-volume">
-                <button id="mute-btn" class="icon-btn sm"><i class="fas fa-volume-up"></i></button>
-                <input type="range" id="volume-slider" min="0" max="100" value="50">
+            <div id="playlist-panel" class="playlist-panel">
+                <div class="playlist-header">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="playlist-search-input" placeholder="Поиск...">
+                    </div>
+                    
+                    <div class="playlist-controls-group">
+                        <button id="show-liked-btn" class="header-btn" title="Показать любимые">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <button id="play-playlist-btn" class="header-btn" title="Играть плейлист">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button id="add-files-btn" class="header-btn" title="Добавить треки">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <ul id="playlist-list">
+                </ul>
+            </div>
+
+            <div id="settings-panel" class="settings-panel">
+                <div class="settings-row">
+                    <label for="white-theme-mode">Белая тема:</label>
+                    <input type="checkbox" id="white-theme-mode">
+                </div>
+                <div class="settings-row">
+                    <label for="auto-color-mode">Авто-цвет (по обложке):</label>
+                    <input type="checkbox" id="auto-color-mode">
+                </div>
+                <div class="settings-row">
+                    <label>Цвет темы (вручную):</label>
+                    <input type="color" id="accent-color-picker" value="#2f66ca">
+                </div>
+                <div class="settings-row">
+                    <label>Сила визуализатора:</label>
+                    <input type="range" id="viz-sensitivity" min="0.5" max="3.0" step="0.1" value="1.0">
+                </div>
+                <div class="settings-row">
+                    <label>Кол-во линий (Visualizer):</label>
+                    <input type="range" id="viz-bar-count" min="32" max="256" step="32" value="128">
+                </div>
+                <div class="settings-row">
+                    <label for="show-cover-viz">Картинка внутри визуала:</label>
+                    <input type="checkbox" id="show-cover-viz">
+                </div>
+                <div class="settings-row">
+                    <label for="bonus-volume">Бонусная громкость (200%):</label>
+                    <input type="checkbox" id="bonus-volume">
+                </div>
             </div>
         </div>
 
-        <input type="file" id="file-input" multiple accept="audio/*" style="display:none;">
+        <div class="controls-bar">
+            
+            <div class="seek-container">
+                <span id="current-time">0:00</span>
+                <input type="range" id="seek-slider" min="0" max="100" value="0">
+                <span id="duration">0:00</span>
+            </div>
+
+            <div class="controls-row">
+                <div class="track-info-footer">
+                    <div class="footer-cover-container">
+                        <img id="footer-cover-img" src="" style="display: none;">
+                        <i id="footer-default-icon" class="fas fa-music"></i>
+                    </div>
+                    <div class="footer-text-group">
+                        <div class="footer-title-row">
+                            <span class="footer-title">Не играет</span>
+                            <button id="edit-track-btn" class="icon-btn-sm" title="Редактировать">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>
+                        <div class="footer-artist">Неизвестен</div>
+                    </div>
+                </div>
+
+                <div class="playback-controls">
+                    <button id="settings-btn" class="control-btn" title="Настройки">
+                        <i class="fas fa-cog"></i>
+                    </button>
+
+                    <button id="eq-btn" class="control-btn" title="Эквалайзер">
+                        <i class="fas fa-sliders-h"></i>
+                    </button>
+
+                    <button id="loop-btn" class="control-btn" title="Повтор: Выкл">
+                        <i class="fas fa-repeat"></i>
+                    </button>
+                    
+                    <button id="prev-btn" class="control-btn" title="Предыдущий (←)">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    
+                    <button id="play-pause-btn" class="control-btn big" title="Пауза/Пуск (Space)">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    
+                    <button id="next-btn" class="control-btn" title="Следующий (→)">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+
+                    <button id="toggle-view" class="control-btn" title="Сменить вид (F)">
+                        <i class="fas fa-image"></i>
+                    </button>
+
+                    <div class="speed-control-wrapper">
+                        <button id="speed-btn" class="control-btn" title="Скорость">
+                            <span id="speed-display-text" style="font-size: 10px; font-weight: bold;">1.0x</span>
+                        </button>
+                        <div id="speed-popup" class="popup-slider">
+                            <input type="range" id="speed-slider" min="0.5" max="3.0" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                    
+                    <button id="toggle-playlist" class="control-btn" title="Плейлист (P)">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+
+                <div class="volume-control">
+                    <button id="add-to-playlist-btn" class="control-btn" title="Добавить в плейлист">
+                        <i class="fas fa-plus"></i>
+                    </button>
+
+                    <i class="fas fa-volume-up"></i>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    <span id="volume-text">50%</span>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <input type="file" id="file-input" multiple accept="audio/*,video/*,.mid,.midi" style="display: none;">
 
     <script src="renderer.js"></script>
 </body>

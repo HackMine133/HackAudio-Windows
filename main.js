@@ -1,60 +1,64 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs');
 
 let mainWindow;
-
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false // Важно для локальных файлов и визуализатора
-    },
-    icon: path.join(__dirname, 'icon.ico')
-  });
-
-  mainWindow.loadFile('index.html');
-
-  // Отправка файлов, если приложение открыто через "Открыть с помощью..."
-  mainWindow.webContents.on('did-finish-load', () => {
-    // Аргументы запуска (для Windows)
-    if (process.platform === 'win32' && process.argv.length > 1) {
-      const args = process.argv.slice(1).filter(arg => !arg.startsWith('--'));
-      if (args.length > 0) {
-        mainWindow.webContents.send('open-file-args', args);
-      }
-    }
-  });
-}
 
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on('second-instance', (event, commandLine) => {
-    // Если пытаются открыть второй экземпляр (например, кликнули на новый файл)
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
-      
-      // Парсим файл из аргументов
-      const args = commandLine.slice(2).filter(arg => !arg.startsWith('--')); // slice(2) для production build часто нужен
-      if(args.length > 0) {
-         mainWindow.webContents.send('open-file-args', args);
+      const openFile = getFileFromArgs(commandLine);
+      if (openFile) {
+        mainWindow.webContents.send('open-file', openFile);
       }
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    createWindow();
+    const openFile = getFileFromArgs(process.argv);
+    if (openFile) {
+      mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.webContents.send('open-file', openFile);
+      });
+    }
+  });
+}
+
+function getFileFromArgs(args) {
+    const file = args.find((arg, index) => {
+        if (index === 0) return false;
+        if (arg === '.') return false;
+        if (arg.endsWith('main.js')) return false;
+        if (arg.startsWith('-')) return false;
+        return true;
+    });
+    return file || null;
+}
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 700,
+    minWidth: 800,
+    minHeight: 600,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000', 
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      webSecurity: false
+    },
+    icon: path.join(__dirname, 'icon.ico')
+  });
+
+  mainWindow.loadFile('index.html');
 }
 
 app.on('window-all-closed', () => {
@@ -63,7 +67,17 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('app-close', () => app.quit());
 ipcMain.on('app-minimize', () => mainWindow.minimize());
+
 ipcMain.on('app-maximize', () => {
-  if (mainWindow.isMaximized()) mainWindow.unmaximize();
-  else mainWindow.maximize();
+    if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+    } else {
+        mainWindow.maximize();
+    }
+});
+
+// Обработчик диалога сохранения
+ipcMain.handle('show-save-dialog', async (event, options) => {
+    // Возвращает объект { canceled: boolean, filePath: string }
+    return await dialog.showSaveDialog(mainWindow, options);
 });
