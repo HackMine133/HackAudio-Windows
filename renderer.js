@@ -65,6 +65,16 @@ const els = {
     searchInput: document.getElementById('search-input'),
     addBtn: document.getElementById('add-folder-btn'),
     fileInput: document.getElementById('file-input'),
+    heroAddBtn: document.getElementById('hero-add-btn'),
+    heroCover: document.getElementById('hero-cover'),
+    heroDefaultIcon: document.getElementById('hero-default-icon'),
+    heroTitle: document.getElementById('hero-title'),
+    heroArtist: document.getElementById('hero-artist'),
+    heroAlbum: document.getElementById('hero-album'),
+    heroStatus: document.getElementById('hero-status'),
+    heroGain: document.getElementById('hero-gain'),
+    heroSpeed: document.getElementById('hero-speed'),
+    heroMode: document.getElementById('hero-mode'),
     
     // Визуализация
     canvas: document.getElementById('visualizer'),
@@ -139,12 +149,18 @@ function initEventListeners() {
     state.audio.addEventListener('play', () => {
         state.isPlaying = true;
         els.playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        if (els.heroStatus) {
+            els.heroStatus.innerText = 'Играет сейчас';
+        }
         initAudioContext(); // Запуск контекста
         requestAnimationFrame(renderFrame);
     });
     state.audio.addEventListener('pause', () => {
         state.isPlaying = false;
         els.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        if (els.heroStatus) {
+            els.heroStatus.innerText = 'На паузе';
+        }
     });
     state.audio.addEventListener('loadedmetadata', () => {
         els.timeTotal.innerText = formatTime(state.audio.duration);
@@ -152,6 +168,9 @@ function initEventListeners() {
 
     // Библиотека
     els.addBtn.onclick = () => els.fileInput.click();
+    if (els.heroAddBtn) {
+        els.heroAddBtn.onclick = () => els.fileInput.click();
+    }
     els.fileInput.onchange = (e) => {
         const paths = Array.from(e.target.files).map(f => f.path);
         loadFiles(paths);
@@ -175,12 +194,14 @@ function initEventListeners() {
         state.playbackRate = parseFloat(e.target.value);
         state.audio.playbackRate = state.playbackRate;
         els.speedVal.innerText = state.playbackRate.toFixed(1);
+        updateHeroStats();
     };
     
     els.bonusVolSlider.oninput = (e) => {
         state.bonusVolume = parseInt(e.target.value);
         els.bonusVolVal.innerText = state.bonusVolume;
         setGain();
+        updateHeroStats();
     };
 }
 
@@ -225,6 +246,7 @@ function playTrack(index, fromJamendo = false) {
         const track = state.jamendoTracks[index];
         state.audio.src = track.audio; // URL
         updatePlayerUI(track, true);
+        updateHeroStats();
     } else {
         state.currentMode = 'local';
         if (index < 0 || index >= state.filteredPlaylist.length) return;
@@ -232,6 +254,7 @@ function playTrack(index, fromJamendo = false) {
         state.currentIndex = state.playlist.findIndex(t => t.path === track.path);
         state.audio.src = track.path;
         updatePlayerUI(track, false);
+        updateHeroStats();
     }
 
     state.audio.playbackRate = state.playbackRate;
@@ -241,6 +264,9 @@ function playTrack(index, fromJamendo = false) {
 function updatePlayerUI(track, isRemote) {
     els.title.innerText = track.name;
     els.artist.innerText = track.artist;
+    if (els.heroTitle) els.heroTitle.innerText = track.name;
+    if (els.heroArtist) els.heroArtist.innerText = track.artist;
+    if (els.heroAlbum) els.heroAlbum.innerText = track.album || '---';
     
     if(!isRemote) renderPlaylist();
 
@@ -250,6 +276,11 @@ function updatePlayerUI(track, isRemote) {
             els.cover.src = track.image;
             els.cover.style.opacity = 1;
             els.defIcon.style.opacity = 0;
+            if (els.heroCover) {
+                els.heroCover.src = track.image;
+                els.heroCover.style.opacity = 1;
+                els.heroDefaultIcon.style.opacity = 0;
+            }
             if(els.autoColorCheck.checked) applyAutoColor();
         } else {
             showDefaultCover();
@@ -261,6 +292,11 @@ function updatePlayerUI(track, isRemote) {
                 els.cover.src = meta.picture;
                 els.cover.style.opacity = 1;
                 els.defIcon.style.opacity = 0;
+                if (els.heroCover) {
+                    els.heroCover.src = meta.picture;
+                    els.heroCover.style.opacity = 1;
+                    els.heroDefaultIcon.style.opacity = 0;
+                }
                 if(els.autoColorCheck.checked) applyAutoColor();
             } else {
                 showDefaultCover();
@@ -272,6 +308,10 @@ function updatePlayerUI(track, isRemote) {
 function showDefaultCover() {
     els.cover.style.opacity = 0;
     els.defIcon.style.opacity = 1;
+    if (els.heroCover) {
+        els.heroCover.style.opacity = 0;
+        els.heroDefaultIcon.style.opacity = 1;
+    }
     resetThemeColor();
 }
 
@@ -562,6 +602,7 @@ function loadSettings() {
         document.body.classList.add('light-theme');
         els.themeCheck.checked = true;
     }
+    updateHeroStats();
 }
 
 function applyAutoColor() {
@@ -573,4 +614,12 @@ function applyAutoColor() {
 function resetThemeColor() {
     document.documentElement.style.removeProperty('--accent');
     document.documentElement.style.removeProperty('--accent-hover');
+}
+
+function updateHeroStats() {
+    if (els.heroGain) els.heroGain.innerText = `${state.bonusVolume}%`;
+    if (els.heroSpeed) els.heroSpeed.innerText = `${state.playbackRate.toFixed(1)}x`;
+    if (els.heroMode) {
+        els.heroMode.innerText = state.currentMode === 'jamendo' ? 'Jamendo' : 'Локально';
+    }
 }
