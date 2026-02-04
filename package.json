@@ -1,0 +1,53 @@
+{
+  "name": "hack-audio",
+  "productName": "HackAudio",
+  "version": "26.3.1",
+  "main": "main.js",
+  "description": "Audio Player",
+  "author": "HackMine",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.hackaudio.app",
+    "productName": "HackAudio",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HackAudio"
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp3",
+          "wav",
+          "ogg",
+          "flac",
+          "m4a"
+        ],
+        "name": "Audio File",
+        "description": "HackAudio Music File",
+        "role": "Editor",
+        "icon": "icon.ico",
+        "isPackage": true
+      }
+    ]
+  },
+  "dependencies": {
+    "jsmediatags": "^3.9.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
