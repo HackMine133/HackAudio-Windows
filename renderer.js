@@ -10,21 +10,35 @@ const state = {
     jamendoTracks: [], // Результаты поиска
     currentMode: 'local', // 'local' или 'jamendo'
     currentIndex: -1,
+    currentFilteredIndex: -1,
+    currentJamendoIndex: -1,
     isPlaying: false,
     isShuffle: false,
     loopMode: 0, // 0: None, 1: All, 2: One
     currentTab: 'library',
+    libraryFilter: 'all',
+    searchQuery: '',
+    sortBy: 'added',
+    sortDir: 'desc',
+    favorites: new Set(),
+    recentlyPlayed: [],
     
     // Аудио контекст
     audioCtx: null,
     analyser: null,
     gainNode: null, 
     source: null,
+    bassNode: null,
+    midNode: null,
+    trebleNode: null,
+    panNode: null,
     dataArray: null,
     
     // Настройки
     bonusVolume: 100, 
     playbackRate: 1.0,
+    eq: { bass: 0, mid: 0, treble: 0 },
+    pan: 0,
     jamendoClientId: 'a648284a'
 };
 
@@ -65,6 +79,9 @@ const els = {
     searchInput: document.getElementById('search-input'),
     addBtn: document.getElementById('add-folder-btn'),
     fileInput: document.getElementById('file-input'),
+    filterPills: document.querySelectorAll('.pill'),
+    sortSelect: document.getElementById('sort-select'),
+    sortDirBtn: document.getElementById('sort-dir-btn'),
     
     // Визуализация
     canvas: document.getElementById('visualizer'),
@@ -81,6 +98,14 @@ const els = {
     speedVal: document.getElementById('speed-val'),
     bonusVolSlider: document.getElementById('bonus-vol-slider'),
     bonusVolVal: document.getElementById('gain-val'),
+    bassSlider: document.getElementById('bass-slider'),
+    bassVal: document.getElementById('bass-val'),
+    midSlider: document.getElementById('mid-slider'),
+    midVal: document.getElementById('mid-val'),
+    trebleSlider: document.getElementById('treble-slider'),
+    trebleVal: document.getElementById('treble-val'),
+    panSlider: document.getElementById('pan-slider'),
+    panVal: document.getElementById('pan-val'),
     
     // Window
     minBtn: document.getElementById('btn-min'),
@@ -158,6 +183,15 @@ function initEventListeners() {
         e.target.value = ''; 
     };
     els.searchInput.oninput = handleSearch;
+    els.filterPills.forEach(btn => {
+        btn.addEventListener('click', () => setLibraryFilter(btn.dataset.filter));
+    });
+    els.sortSelect.onchange = (e) => {
+        state.sortBy = e.target.value;
+        updateFilteredPlaylist();
+        saveLibraryPrefs();
+    };
+    els.sortDirBtn.onclick = toggleSortDir;
 
     // Jamendo Search
     els.jamBtn.onclick = searchJamendo;
@@ -170,18 +204,55 @@ function initEventListeners() {
         document.body.classList.toggle('light-theme', e.target.checked);
         localStorage.setItem('theme', e.target.checked ? 'light' : 'dark');
     };
+
+    els.autoColorCheck.onchange = (e) => {
+        if (e.target.checked && els.cover.src) {
+            applyAutoColorFromImage(els.cover.src);
+        } else {
+            resetThemeColor();
+        }
+    };
     
     els.speedSlider.oninput = (e) => {
         state.playbackRate = parseFloat(e.target.value);
         state.audio.playbackRate = state.playbackRate;
         els.speedVal.innerText = state.playbackRate.toFixed(1);
+        saveAudioPrefs();
     };
     
     els.bonusVolSlider.oninput = (e) => {
         state.bonusVolume = parseInt(e.target.value);
         els.bonusVolVal.innerText = state.bonusVolume;
         setGain();
+        saveAudioPrefs();
     };
+
+    els.bassSlider.oninput = (e) => {
+        state.eq.bass = parseInt(e.target.value);
+        els.bassVal.innerText = state.eq.bass;
+        setEQ();
+        saveAudioPrefs();
+    };
+    els.midSlider.oninput = (e) => {
+        state.eq.mid = parseInt(e.target.value);
+        els.midVal.innerText = state.eq.mid;
+        setEQ();
+        saveAudioPrefs();
+    };
+    els.trebleSlider.oninput = (e) => {
+        state.eq.treble = parseInt(e.target.value);
+        els.trebleVal.innerText = state.eq.treble;
+        setEQ();
+        saveAudioPrefs();
+    };
+    els.panSlider.oninput = (e) => {
+        state.pan = parseFloat(e.target.value);
+        els.panVal.innerText = state.pan.toFixed(1);
+        setPan();
+        saveAudioPrefs();
+    };
+
+    window.addEventListener('keydown', handleKeyboardShortcuts);
 }
 
 // --- Аудио Логика ---
@@ -192,15 +263,31 @@ function initAudioContext() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         state.audioCtx = new AudioContext();
         
-        // Граф: Source -> Gain (Bonus) -> Analyser -> Destination
+        // Граф: Source -> EQ -> Pan -> Gain (Bonus) -> Analyser -> Destination
         state.source = state.audioCtx.createMediaElementSource(state.audio);
+        state.bassNode = state.audioCtx.createBiquadFilter();
+        state.midNode = state.audioCtx.createBiquadFilter();
+        state.trebleNode = state.audioCtx.createBiquadFilter();
+        state.panNode = state.audioCtx.createStereoPanner();
         state.gainNode = state.audioCtx.createGain();
         state.analyser = state.audioCtx.createAnalyser();
         
+        state.bassNode.type = 'lowshelf';
+        state.bassNode.frequency.value = 80;
+        state.midNode.type = 'peaking';
+        state.midNode.frequency.value = 1000;
+        state.midNode.Q.value = 1;
+        state.trebleNode.type = 'highshelf';
+        state.trebleNode.frequency.value = 8000;
+
         state.analyser.fftSize = 256; 
         state.dataArray = new Uint8Array(state.analyser.frequencyBinCount);
 
-        state.source.connect(state.gainNode);
+        state.source.connect(state.bassNode);
+        state.bassNode.connect(state.midNode);
+        state.midNode.connect(state.trebleNode);
+        state.trebleNode.connect(state.panNode);
+        state.panNode.connect(state.gainNode);
         state.gainNode.connect(state.analyser);
         state.analyser.connect(state.audioCtx.destination);
     }
@@ -211,6 +298,8 @@ function initAudioContext() {
     }
 
     setGain();
+    setEQ();
+    setPan();
 }
 
 function setGain() {
@@ -219,19 +308,35 @@ function setGain() {
     state.gainNode.gain.value = gainVal;
 }
 
+function setEQ() {
+    if(!state.bassNode || !state.midNode || !state.trebleNode) return;
+    state.bassNode.gain.value = state.eq.bass;
+    state.midNode.gain.value = state.eq.mid;
+    state.trebleNode.gain.value = state.eq.treble;
+}
+
+function setPan() {
+    if(!state.panNode) return;
+    state.panNode.pan.value = state.pan;
+}
+
 function playTrack(index, fromJamendo = false) {
     if (fromJamendo) {
         state.currentMode = 'jamendo';
         const track = state.jamendoTracks[index];
         state.audio.src = track.audio; // URL
+        state.currentJamendoIndex = index;
         updatePlayerUI(track, true);
     } else {
         state.currentMode = 'local';
         if (index < 0 || index >= state.filteredPlaylist.length) return;
         const track = state.filteredPlaylist[index];
         state.currentIndex = state.playlist.findIndex(t => t.path === track.path);
+        state.currentFilteredIndex = index;
+        state.currentJamendoIndex = -1;
         state.audio.src = track.path;
         updatePlayerUI(track, false);
+        addToRecent(track.path);
     }
 
     state.audio.playbackRate = state.playbackRate;
@@ -246,11 +351,11 @@ function updatePlayerUI(track, isRemote) {
 
     if (isRemote) {
         // Для Jamendo картинка уже есть
-        if(track.image) {
-            els.cover.src = track.image;
-            els.cover.style.opacity = 1;
-            els.defIcon.style.opacity = 0;
-            if(els.autoColorCheck.checked) applyAutoColor();
+            if(track.image) {
+                els.cover.src = track.image;
+                els.cover.style.opacity = 1;
+                els.defIcon.style.opacity = 0;
+            if(els.autoColorCheck.checked) applyAutoColorFromImage(track.image);
         } else {
             showDefaultCover();
         }
@@ -261,7 +366,7 @@ function updatePlayerUI(track, isRemote) {
                 els.cover.src = meta.picture;
                 els.cover.style.opacity = 1;
                 els.defIcon.style.opacity = 0;
-                if(els.autoColorCheck.checked) applyAutoColor();
+                if(els.autoColorCheck.checked) applyAutoColorFromImage(meta.picture);
             } else {
                 showDefaultCover();
             }
@@ -283,18 +388,24 @@ function togglePlay() {
 function playNext() {
     // Если играем Jamendo, логика Next проще (просто следующий в списке результатов)
     if(state.currentMode === 'jamendo') {
-         // Для простоты реализации "next" в jamendo не реализован в этом блоке
-         // так как индекс трека в результатах не сохраняется в глобальный currentIndex
-         // при желании можно добавить
-         return; 
+        if (state.currentJamendoIndex < state.jamendoTracks.length - 1) {
+            playTrack(state.currentJamendoIndex + 1, true);
+        } else if (state.loopMode === 1 && state.jamendoTracks.length > 0) {
+            playTrack(0, true);
+        }
+        return;
     }
+
+    if (state.filteredPlaylist.length === 0) return;
 
     if (state.isShuffle) {
         let rand = Math.floor(Math.random() * state.filteredPlaylist.length);
         playTrack(rand);
     } else {
-        if (state.currentIndex < state.filteredPlaylist.length - 1) {
-            playTrack(state.currentIndex + 1);
+        if (state.currentFilteredIndex === -1) {
+            playTrack(0);
+        } else if (state.currentFilteredIndex < state.filteredPlaylist.length - 1) {
+            playTrack(state.currentFilteredIndex + 1);
         } else if (state.loopMode === 1) {
             playTrack(0);
         }
@@ -305,7 +416,11 @@ function playPrev() {
     if (state.audio.currentTime > 3) {
         state.audio.currentTime = 0;
     } else {
-        if (state.currentMode === 'local' && state.currentIndex > 0) playTrack(state.currentIndex - 1);
+        if (state.currentMode === 'jamendo' && state.currentJamendoIndex > 0) {
+            playTrack(state.currentJamendoIndex - 1, true);
+        } else if (state.currentMode === 'local' && state.currentFilteredIndex > 0) {
+            playTrack(state.currentFilteredIndex - 1);
+        }
     }
 }
 
@@ -371,11 +486,11 @@ async function loadFiles(filePaths) {
             name: meta.title || path.basename(p, path.extname(p)),
             artist: meta.artist || 'Неизвестен',
             album: meta.album || '---',
-            baseName: path.basename(p)
+            baseName: path.basename(p),
+            addedAt: Date.now()
         });
     }
-    state.filteredPlaylist = [...state.playlist];
-    renderPlaylist();
+    updateFilteredPlaylist();
     if(state.playlist.length > 0 && state.currentIndex === -1) switchTab('library');
 }
 
@@ -386,22 +501,20 @@ function handleDrop(e) {
 }
 
 function handleSearch(e) {
-    const query = e.target.value.toLowerCase();
-    if (!query) {
-        state.filteredPlaylist = [...state.playlist];
-    } else {
-        state.filteredPlaylist = state.playlist.filter(t => 
-            t.name.toLowerCase().includes(query) || 
-            t.artist.toLowerCase().includes(query)
-        );
-    }
-    renderPlaylist();
+    state.searchQuery = e.target.value.toLowerCase();
+    updateFilteredPlaylist();
 }
 
 function renderPlaylist() {
     els.playlistContainer.innerHTML = '';
     if (state.filteredPlaylist.length === 0) {
-        els.playlistContainer.innerHTML = '<div class="empty-state"><p>Список пуст</p></div>';
+        if (state.libraryFilter === 'favorites') {
+            els.playlistContainer.innerHTML = '<div class="empty-state"><i class="fas fa-heart-broken"></i><p>Избранных треков пока нет</p></div>';
+        } else if (state.libraryFilter === 'recent') {
+            els.playlistContainer.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>Недавно прослушанные появятся после воспроизведения</p></div>';
+        } else {
+            els.playlistContainer.innerHTML = '<div class="empty-state"><p>Список пуст</p></div>';
+        }
         return;
     }
     state.filteredPlaylist.forEach((track, index) => {
@@ -409,14 +522,24 @@ function renderPlaylist() {
         li.className = 'track-item';
         const isCurrent = (state.currentIndex !== -1 && state.playlist[state.currentIndex] && state.playlist[state.currentIndex].path === track.path);
         if (isCurrent && state.currentMode === 'local') li.classList.add('active');
+        const isFav = state.favorites.has(track.path);
 
         li.innerHTML = `
             <span class="col-idx">${index + 1}</span>
             <span class="col-title">${track.name}</span>
             <span class="col-artist">${track.artist}</span>
             <span class="col-album">${track.album}</span>
+            <span class="col-fav">
+                <button class="fav-btn ${isFav ? 'active' : ''}" title="Избранное">
+                    <i class="fas fa-heart"></i>
+                </button>
+            </span>
         `;
         li.onclick = () => playTrack(index, false);
+        li.querySelector('.fav-btn').onclick = (event) => {
+            event.stopPropagation();
+            toggleFavorite(track.path);
+        };
         els.playlistContainer.appendChild(li);
     });
 }
@@ -466,6 +589,84 @@ function renderJamendoResults() {
         div.onclick = () => playTrack(index, true);
         els.jamResults.appendChild(div);
     });
+}
+
+// --- Библиотека: фильтры, сортировка ---
+
+function updateFilteredPlaylist() {
+    let list = [...state.playlist];
+
+    if (state.searchQuery) {
+        list = list.filter(t =>
+            t.name.toLowerCase().includes(state.searchQuery) ||
+            t.artist.toLowerCase().includes(state.searchQuery)
+        );
+    }
+
+    if (state.libraryFilter === 'favorites') {
+        list = list.filter(t => state.favorites.has(t.path));
+    } else if (state.libraryFilter === 'recent') {
+        const recentMap = new Map(state.recentlyPlayed.map((path, idx) => [path, idx]));
+        list = list
+            .filter(t => recentMap.has(t.path))
+            .sort((a, b) => recentMap.get(a.path) - recentMap.get(b.path));
+    }
+
+    if (state.libraryFilter !== 'recent') {
+        const dir = state.sortDir === 'asc' ? 1 : -1;
+        list.sort((a, b) => {
+            if (state.sortBy === 'added') return (a.addedAt - b.addedAt) * dir;
+            const aVal = (a[state.sortBy] || '').toString().toLowerCase();
+            const bVal = (b[state.sortBy] || '').toString().toLowerCase();
+            return aVal.localeCompare(bVal) * dir;
+        });
+    }
+
+    state.filteredPlaylist = list;
+    if (state.currentIndex !== -1 && state.playlist[state.currentIndex]) {
+        const currentPath = state.playlist[state.currentIndex].path;
+        state.currentFilteredIndex = list.findIndex(track => track.path === currentPath);
+    } else {
+        state.currentFilteredIndex = -1;
+    }
+    renderPlaylist();
+}
+
+function setLibraryFilter(filter) {
+    state.libraryFilter = filter;
+    els.filterPills.forEach(btn => btn.classList.toggle('active', btn.dataset.filter === filter));
+    updateFilteredPlaylist();
+    saveLibraryPrefs();
+}
+
+function toggleSortDir() {
+    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    updateSortIcon();
+    updateFilteredPlaylist();
+    saveLibraryPrefs();
+}
+
+function updateSortIcon() {
+    const icon = state.sortDir === 'asc' ? 'fa-sort-amount-up-alt' : 'fa-sort-amount-down-alt';
+    els.sortDirBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+}
+
+function toggleFavorite(trackPath) {
+    if (state.favorites.has(trackPath)) {
+        state.favorites.delete(trackPath);
+    } else {
+        state.favorites.add(trackPath);
+    }
+    saveFavorites();
+    updateFilteredPlaylist();
+}
+
+function addToRecent(trackPath) {
+    state.recentlyPlayed = state.recentlyPlayed.filter(path => path !== trackPath);
+    state.recentlyPlayed.unshift(trackPath);
+    state.recentlyPlayed = state.recentlyPlayed.slice(0, 50);
+    saveRecent();
+    if (state.libraryFilter === 'recent') updateFilteredPlaylist();
 }
 
 
@@ -558,10 +759,124 @@ function formatTime(seconds) {
 }
 
 function loadSettings() {
-    if(localStorage.getItem('theme') === 'light') {
+    const storedTheme = localStorage.getItem('theme');
+    if(storedTheme === 'light') {
         document.body.classList.add('light-theme');
         els.themeCheck.checked = true;
     }
+
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    state.favorites = new Set(favorites);
+
+    const recent = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+    state.recentlyPlayed = recent;
+
+    const libraryPrefs = JSON.parse(localStorage.getItem('libraryPrefs') || '{}');
+    if (libraryPrefs.filter) state.libraryFilter = libraryPrefs.filter;
+    if (libraryPrefs.sortBy) state.sortBy = libraryPrefs.sortBy;
+    if (libraryPrefs.sortDir) state.sortDir = libraryPrefs.sortDir;
+
+    const audioPrefs = JSON.parse(localStorage.getItem('audioPrefs') || '{}');
+    if (audioPrefs.bonusVolume) state.bonusVolume = audioPrefs.bonusVolume;
+    if (audioPrefs.playbackRate) state.playbackRate = audioPrefs.playbackRate;
+    if (audioPrefs.eq) state.eq = audioPrefs.eq;
+    if (audioPrefs.pan !== undefined) state.pan = audioPrefs.pan;
+
+    els.bonusVolSlider.value = state.bonusVolume;
+    els.bonusVolVal.innerText = state.bonusVolume;
+    els.speedSlider.value = state.playbackRate;
+    els.speedVal.innerText = state.playbackRate.toFixed(1);
+    els.bassSlider.value = state.eq.bass;
+    els.bassVal.innerText = state.eq.bass;
+    els.midSlider.value = state.eq.mid;
+    els.midVal.innerText = state.eq.mid;
+    els.trebleSlider.value = state.eq.treble;
+    els.trebleVal.innerText = state.eq.treble;
+    els.panSlider.value = state.pan;
+    els.panVal.innerText = state.pan.toFixed(1);
+
+    els.sortSelect.value = state.sortBy;
+    updateSortIcon();
+    setLibraryFilter(state.libraryFilter);
+}
+
+function saveFavorites() {
+    localStorage.setItem('favorites', JSON.stringify(Array.from(state.favorites)));
+}
+
+function saveRecent() {
+    localStorage.setItem('recentlyPlayed', JSON.stringify(state.recentlyPlayed));
+}
+
+function saveLibraryPrefs() {
+    localStorage.setItem('libraryPrefs', JSON.stringify({
+        filter: state.libraryFilter,
+        sortBy: state.sortBy,
+        sortDir: state.sortDir
+    }));
+}
+
+function saveAudioPrefs() {
+    localStorage.setItem('audioPrefs', JSON.stringify({
+        bonusVolume: state.bonusVolume,
+        playbackRate: state.playbackRate,
+        eq: state.eq,
+        pan: state.pan
+    }));
+}
+
+function handleKeyboardShortcuts(event) {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+    if (event.code === 'Space') {
+        event.preventDefault();
+        togglePlay();
+    } else if (event.code === 'ArrowRight') {
+        state.audio.currentTime = Math.min(state.audio.currentTime + 5, state.audio.duration || state.audio.currentTime);
+    } else if (event.code === 'ArrowLeft') {
+        state.audio.currentTime = Math.max(state.audio.currentTime - 5, 0);
+    } else if (event.code === 'ArrowUp') {
+        event.preventDefault();
+        state.audio.volume = Math.min(state.audio.volume + 0.05, 1);
+        els.volumeSlider.value = Math.round(state.audio.volume * 100);
+        updateVolumeIcon();
+    } else if (event.code === 'ArrowDown') {
+        event.preventDefault();
+        state.audio.volume = Math.max(state.audio.volume - 0.05, 0);
+        els.volumeSlider.value = Math.round(state.audio.volume * 100);
+        updateVolumeIcon();
+    }
+}
+
+function applyAutoColorFromImage(imageSrc) {
+    if (!imageSrc) {
+        applyAutoColor();
+        return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const size = 40;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            count++;
+        }
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
+        document.documentElement.style.setProperty('--accent', `rgb(${r}, ${g}, ${b})`);
+        document.documentElement.style.setProperty('--accent-hover', `rgba(${r}, ${g}, ${b}, 0.8)`);
+    };
+    img.onerror = applyAutoColor;
+    img.src = imageSrc;
 }
 
 function applyAutoColor() {

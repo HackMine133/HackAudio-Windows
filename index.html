@@ -52,10 +52,29 @@
             <main class="content-area">
                 
                 <div id="tab-library" class="tab-content active">
-                    <div class="header-search">
+                    <div class="library-toolbar">
                         <div class="search-bar">
                             <i class="fas fa-search"></i>
                             <input type="text" id="search-input" placeholder="Поиск в библиотеке...">
+                        </div>
+                        <div class="library-actions">
+                            <div class="filter-pills">
+                                <button class="pill active" data-filter="all">Все</button>
+                                <button class="pill" data-filter="favorites"><i class="fas fa-heart"></i> Избранное</button>
+                                <button class="pill" data-filter="recent"><i class="fas fa-history"></i> Недавние</button>
+                            </div>
+                            <div class="sort-controls">
+                                <span>Сортировка</span>
+                                <select id="sort-select">
+                                    <option value="added">По дате добавления</option>
+                                    <option value="name">По названию</option>
+                                    <option value="artist">По исполнителю</option>
+                                    <option value="album">По альбому</option>
+                                </select>
+                                <button id="sort-dir-btn" class="icon-btn sm" title="Порядок">
+                                    <i class="fas fa-sort-amount-down-alt"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -64,6 +83,7 @@
                         <span class="col-title">Название</span>
                         <span class="col-artist">Исполнитель</span>
                         <span class="col-album">Альбом</span>
+                        <span class="col-fav"><i class="fas fa-heart"></i></span>
                     </div>
                     
                     <ul id="playlist-list" class="track-list">
@@ -120,6 +140,30 @@
                             <div class="control-row">
                                 <label>Усиление громкости (Gain: <span id="gain-val">100</span>%)</label>
                                 <input type="range" id="bonus-vol-slider" min="100" max="200" step="10" value="100">
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <h3>Эквалайзер</h3>
+                            <div class="control-row">
+                                <label>Низкие (Bass: <span id="bass-val">0</span>dB)</label>
+                                <input type="range" id="bass-slider" min="-12" max="12" step="1" value="0">
+                            </div>
+                            <div class="control-row">
+                                <label>Средние (Mid: <span id="mid-val">0</span>dB)</label>
+                                <input type="range" id="mid-slider" min="-12" max="12" step="1" value="0">
+                            </div>
+                            <div class="control-row">
+                                <label>Высокие (Treble: <span id="treble-val">0</span>dB)</label>
+                                <input type="range" id="treble-slider" min="-12" max="12" step="1" value="0">
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <h3>Пространство</h3>
+                            <div class="control-row">
+                                <label>Баланс (L/R: <span id="pan-val">0</span>)</label>
+                                <input type="range" id="pan-slider" min="-1" max="1" step="0.1" value="0">
                             </div>
                         </div>
                     </div>
