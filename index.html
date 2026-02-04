@@ -25,28 +25,6 @@
                 <i id="default-icon" class="fas fa-music album-placeholder"></i>
             </div>
 
-            <div class="now-playing-card" id="now-playing-card">
-                <div class="now-playing-header">
-                    <span class="now-playing-label">Сейчас играет</span>
-                    <span class="now-playing-chip"><i class="fas fa-broadcast-tower"></i> Hi-Fi</span>
-                </div>
-                <div class="now-playing-body">
-                    <div class="now-playing-cover">
-                        <img id="now-playing-cover" src="" alt="Обложка">
-                        <i id="now-playing-placeholder" class="fas fa-compact-disc"></i>
-                    </div>
-                    <div class="now-playing-text">
-                        <div id="now-playing-title" class="now-playing-title">Не играет</div>
-                        <div id="now-playing-artist" class="now-playing-artist">Неизвестен</div>
-                        <div class="now-playing-tags">
-                            <span class="tag">Playlist</span>
-                            <span class="tag">Flow</span>
-                            <span class="tag tag-accent"><i class="fas fa-heart"></i> Любимый</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div id="video-container" style="display: none;">
                 <video id="main-video" controls></video>
                 <div class="video-controls-overlay">
@@ -169,19 +147,27 @@
             </div>
 
             <div class="controls-row">
-                <div class="track-info-footer">
-                    <div class="footer-cover-container">
-                        <img id="footer-cover-img" src="" style="display: none;">
-                        <i id="footer-default-icon" class="fas fa-music"></i>
+                <div class="now-playing-panel">
+                    <div class="np-cover-container">
+                        <img id="now-playing-cover" src="" alt="Обложка">
+                        <i id="now-playing-placeholder" class="fas fa-compact-disc"></i>
                     </div>
-                    <div class="footer-text-group">
-                        <div class="footer-title-row">
-                            <span class="footer-title">Не играет</span>
+                    <div class="np-info">
+                        <div class="np-title-row">
+                            <span id="now-playing-title" class="np-title">Не играет</span>
+                            <button id="now-playing-like-btn" class="icon-btn-sm" title="В любимые">
+                                <i class="far fa-heart"></i>
+                            </button>
                             <button id="edit-track-btn" class="icon-btn-sm" title="Редактировать">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
                         </div>
-                        <div class="footer-artist">Неизвестен</div>
+                        <div id="now-playing-artist" class="np-artist">Неизвестен</div>
+                        <div class="np-meta-row">
+                            <span id="now-playing-position" class="np-meta">0/0</span>
+                            <span class="np-dot">•</span>
+                            <span id="now-playing-quality" class="np-meta">Hi-Fi</span>
+                        </div>
                     </div>
                 </div>
 
@@ -232,8 +218,9 @@
                     <button id="add-to-playlist-btn" class="control-btn" title="Добавить в плейлист">
                         <i class="fas fa-plus"></i>
                     </button>
-
-                    <i class="fas fa-volume-up"></i>
+                    <button id="mute-btn" class="control-btn small" title="Без звука">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
                     <input type="range" id="volume-slider" min="0" max="100" value="50">
                     <span id="volume-text">50%</span>
                 </div>

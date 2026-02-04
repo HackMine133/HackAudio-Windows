@@ -10,16 +10,14 @@ const coverImage = document.getElementById('cover-image');
 const defaultIcon = document.getElementById('default-icon');
 const mainDisplay = document.querySelector('.main-display');
 
-// Footer
-const footerTitle = document.querySelector('.footer-title');
-const footerArtist = document.querySelector('.footer-artist');
-const footerCoverImg = document.getElementById('footer-cover-img');
-const footerDefaultIcon = document.getElementById('footer-default-icon');
-const editTrackBtn = document.getElementById('edit-track-btn');
+// Now Playing Panel
 const nowPlayingTitle = document.getElementById('now-playing-title');
 const nowPlayingArtist = document.getElementById('now-playing-artist');
 const nowPlayingCover = document.getElementById('now-playing-cover');
 const nowPlayingPlaceholder = document.getElementById('now-playing-placeholder');
+const nowPlayingLikeBtn = document.getElementById('now-playing-like-btn');
+const nowPlayingPosition = document.getElementById('now-playing-position');
+const editTrackBtn = document.getElementById('edit-track-btn');
 
 // Controls
 const playPauseBtn = document.getElementById('play-pause-btn');
@@ -35,6 +33,7 @@ const toggleViewBtn = document.getElementById('toggle-view');
 // Sliders
 const volumeSlider = document.getElementById('volume-slider');
 const volumeText = document.getElementById('volume-text');
+const muteBtn = document.getElementById('mute-btn');
 const seekSlider = document.getElementById('seek-slider');
 const currentTimeText = document.getElementById('current-time');
 const durationText = document.getElementById('duration');
@@ -123,6 +122,8 @@ let vizBarCount = 128;
 let showCoverInViz = false;
 let currentCoverSrc = null;
 let currentFilePath = null; // Храним текущий путь глобально
+let isMuted = false;
+let lastVolumeBeforeMute = 50;
 
 let viewMode = 0; 
 let isShowingLiked = false;
@@ -384,6 +385,7 @@ async function loadTrack(filePath) {
 
     updateMainLikeButton(filePath);
     updateAddToPlaylistBtn(filePath);
+    updateNowPlayingPosition();
     readMetadata(filePath);
     
     audio.src = filePath;
@@ -400,8 +402,9 @@ function playMidiStub(filePath) {
     isPlaying = true;
     playPauseIcon.className = 'fas fa-pause';
     
-    footerTitle.textContent = path.basename(filePath);
-    footerArtist.textContent = "MIDI File";
+    nowPlayingTitle.textContent = path.basename(filePath);
+    nowPlayingArtist.textContent = "MIDI File";
+    updateNowPlayingPosition();
     
     if (audioCtx) {
         midiOscillator = audioCtx.createOscillator();
@@ -454,6 +457,19 @@ function setVolume(sliderValue) {
         if (gainNode) gainNode.gain.value = 1.0;
     }
     volumeText.textContent = Math.round(sliderValue) + '%';
+    if (Number(sliderValue) > 0) {
+        lastVolumeBeforeMute = Number(sliderValue);
+    }
+    updateMuteButtonState(sliderValue);
+}
+
+function updateMuteButtonState(sliderValue) {
+    const isZero = Number(sliderValue) === 0;
+    isMuted = isZero;
+    if (muteBtn) {
+        muteBtn.innerHTML = `<i class="fas ${isZero ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`;
+        muteBtn.title = isZero ? 'Включить звук' : 'Без звука';
+    }
 }
 
 function playTrack() {
@@ -577,7 +593,28 @@ addToPlaylistBtn.addEventListener('click', () => {
 });
 
 function updateMainLikeButton(filePath) {
-    // Placeholder
+    if (!nowPlayingLikeBtn) return;
+    const isLiked = likedTracks.has(filePath);
+    nowPlayingLikeBtn.classList.toggle('liked', isLiked);
+    nowPlayingLikeBtn.innerHTML = `<i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>`;
+    nowPlayingLikeBtn.title = isLiked ? 'Убрать из любимых' : 'В любимые';
+}
+
+if (nowPlayingLikeBtn) {
+    nowPlayingLikeBtn.addEventListener('click', () => {
+        if (!currentFilePath) return;
+        toggleLike(currentFilePath);
+        renderPlaylist();
+    });
+}
+
+function updateNowPlayingPosition() {
+    if (!nowPlayingPosition) return;
+    if (!activeQueue.length || currentIndex < 0) {
+        nowPlayingPosition.textContent = '—';
+        return;
+    }
+    nowPlayingPosition.textContent = `${currentIndex + 1}/${activeQueue.length}`;
 }
 
 function updateAddToPlaylistBtn(filePath) {
@@ -592,6 +629,22 @@ function updateAddToPlaylistBtn(filePath) {
 
 // Volume & Seek
 volumeSlider.addEventListener('input', (e) => { setVolume(e.target.value); saveSettings(); });
+if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+        if (isMuted) {
+            const restoreValue = lastVolumeBeforeMute || 50;
+            volumeSlider.value = restoreValue;
+            setVolume(restoreValue);
+            isMuted = false;
+        } else {
+            lastVolumeBeforeMute = Number(volumeSlider.value) || 50;
+            volumeSlider.value = 0;
+            setVolume(0);
+            isMuted = true;
+        }
+        saveSettings();
+    });
+}
 seekSlider.addEventListener('input', (e) => {
     if(!isMidiPlaying) {
         const time = (e.target.value / 100) * audio.duration;
@@ -649,7 +702,7 @@ toggleViewBtn.addEventListener('click', toggleViewMode);
 // --- METADATA & COLOR ---
 function readMetadata(filePath) {
     const data = customMetadata[filePath] || {};
-    footerTitle.textContent = "Загрузка...";
+    nowPlayingTitle.textContent = "Загрузка...";
     
     if (data.title) {
         updateMetaUI(data.title, data.artist, data.cover);
@@ -677,8 +730,6 @@ function readMetadata(filePath) {
 }
 
 function updateMetaUI(title, artist, coverUrl) {
-    footerTitle.textContent = title;
-    footerArtist.textContent = artist;
     nowPlayingTitle.textContent = title;
     nowPlayingArtist.textContent = artist;
     
@@ -687,13 +738,10 @@ function updateMetaUI(title, artist, coverUrl) {
     if (coverUrl) {
         // Если обложка ЕСТЬ
         coverImage.src = coverUrl;
-        footerCoverImg.src = coverUrl;
         nowPlayingCover.src = coverUrl;
         coverImage.style.opacity = 1;
         coverImage.style.display = 'block';
         defaultIcon.style.display = 'none';
-        footerCoverImg.style.display = 'block';
-        footerDefaultIcon.style.display = 'none';
         nowPlayingCover.style.display = 'block';
         nowPlayingPlaceholder.style.display = 'none';
 
@@ -704,8 +752,6 @@ function updateMetaUI(title, artist, coverUrl) {
         // Если обложки НЕТ
         coverImage.style.display = 'none';
         defaultIcon.style.display = 'block';
-        footerCoverImg.style.display = 'none';
-        footerDefaultIcon.style.display = 'block';
         nowPlayingCover.style.display = 'none';
         nowPlayingPlaceholder.style.display = 'block';
         
@@ -744,8 +790,8 @@ editTrackBtn.addEventListener('click', () => {
     
     // Предзаполняем поля текущими данными
     const meta = customMetadata[currentFilePath] || {};
-    editTitleInput.value = meta.title || footerTitle.textContent;
-    editArtistInput.value = meta.artist || footerArtist.textContent;
+    editTitleInput.value = meta.title || nowPlayingTitle.textContent;
+    editArtistInput.value = meta.artist || nowPlayingArtist.textContent;
     editCoverPreview.src = currentCoverSrc || '';
     
     editWindow.style.display = 'block';
@@ -931,12 +977,14 @@ function renderPlaylist() {
         }
         playlistListUl.appendChild(li);
     });
+    updateNowPlayingPosition();
 }
 
 function toggleLike(filePath) {
     if (likedTracks.has(filePath)) likedTracks.delete(filePath);
     else likedTracks.add(filePath);
     localStorage.setItem('likedTracks', JSON.stringify([...likedTracks]));
+    if (currentFilePath === filePath) updateMainLikeButton(filePath);
 }
 
 // --- Utils ---
