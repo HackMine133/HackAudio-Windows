@@ -16,6 +16,10 @@ const footerArtist = document.querySelector('.footer-artist');
 const footerCoverImg = document.getElementById('footer-cover-img');
 const footerDefaultIcon = document.getElementById('footer-default-icon');
 const editTrackBtn = document.getElementById('edit-track-btn');
+const nowPlayingTitle = document.getElementById('now-playing-title');
+const nowPlayingArtist = document.getElementById('now-playing-artist');
+const nowPlayingCover = document.getElementById('now-playing-cover');
+const nowPlayingPlaceholder = document.getElementById('now-playing-placeholder');
 
 // Controls
 const playPauseBtn = document.getElementById('play-pause-btn');
@@ -675,6 +679,8 @@ function readMetadata(filePath) {
 function updateMetaUI(title, artist, coverUrl) {
     footerTitle.textContent = title;
     footerArtist.textContent = artist;
+    nowPlayingTitle.textContent = title;
+    nowPlayingArtist.textContent = artist;
     
     currentCoverSrc = coverUrl; 
 
@@ -682,11 +688,14 @@ function updateMetaUI(title, artist, coverUrl) {
         // Если обложка ЕСТЬ
         coverImage.src = coverUrl;
         footerCoverImg.src = coverUrl;
+        nowPlayingCover.src = coverUrl;
         coverImage.style.opacity = 1;
         coverImage.style.display = 'block';
         defaultIcon.style.display = 'none';
         footerCoverImg.style.display = 'block';
         footerDefaultIcon.style.display = 'none';
+        nowPlayingCover.style.display = 'block';
+        nowPlayingPlaceholder.style.display = 'none';
 
         if (isAutoColor) {
             applyAutoColor(coverUrl);
@@ -697,6 +706,8 @@ function updateMetaUI(title, artist, coverUrl) {
         defaultIcon.style.display = 'block';
         footerCoverImg.style.display = 'none';
         footerDefaultIcon.style.display = 'block';
+        nowPlayingCover.style.display = 'none';
+        nowPlayingPlaceholder.style.display = 'block';
         
         // ИСПРАВЛЕНИЕ: Мы убрали проверку "if (!isAutoColor)".
         // Теперь, если обложки нет, мы ВСЕГДА возвращаем цвет,
