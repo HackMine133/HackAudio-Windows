@@ -83,9 +83,22 @@ body.light-theme .title-bar {
     background: rgba(0,0,0,0.05);
 }
 
-.title { 
-    font-size: 13px; font-weight: 600; opacity: 0.8; letter-spacing: 0.5px;
+.title {
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
     color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.app-logo {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .window-controls button {
@@ -255,12 +268,61 @@ body.light-theme .title-bar {
     font-size: 12px; color: var(--text-color-sec);
 }
 .settings-row input[type="color"] { width: 40px; height: 25px; border: none; background: none; cursor: pointer; }
-.settings-row input[type="range"] { width: 120px; accent-color: var(--accent-color); }
-.settings-row input[type="checkbox"] { accent-color: var(--accent-color); transform: scale(1.2); }
+.settings-row input[type="range"] {
+    width: 120px;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
+}
+.settings-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.3);
+}
+.settings-row input[type="checkbox"] {
+    appearance: none;
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.settings-row input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--text-color);
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease;
+}
+.settings-row input[type="checkbox"]:checked {
+    background: rgba(var(--accent-rgb), 0.6);
+}
+.settings-row input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+}
+.styled-select {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+}
 
 /* Нижняя панель */
 .controls-bar {
-    height: 110px;
+    height: 120px;
     background: var(--panel-bg); backdrop-filter: blur(14px);
     border-top: 1px solid var(--border-color);
     display: flex; flex-direction: column; justify-content: center;
@@ -275,6 +337,14 @@ body.light-theme .title-bar {
     flex: 1; -webkit-appearance: none; height: 6px;
     background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.45), rgba(255, 255, 255, 0.12));
     border-radius: 999px; outline: none; cursor: pointer;
+    transition: background 0.2s ease;
+}
+.seek-container.compact {
+    width: 240px;
+    margin-top: 6px;
+}
+.seek-container.compact #seek-slider {
+    height: 4px;
 }
 #seek-slider::-webkit-slider-thumb {
     -webkit-appearance: none; width: 10px; height: 10px;
@@ -298,7 +368,7 @@ body.light-theme .title-bar {
     padding: 10px 12px;
     border-radius: 14px;
     background: var(--glass-bg);
-    border: 1px solid var(--border-color);
+    border: none;
     box-shadow: var(--shadow-soft);
 }
 
@@ -378,7 +448,14 @@ body.light-theme .title-bar {
 /* Playback Controls */
 .playback-controls { 
     display: flex; align-items: center; justify-content: center;
-    gap: 12px; flex: 1; position: relative;
+    gap: 8px; flex: 1; position: relative;
+    flex-direction: column;
+}
+
+.playback-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* Speed Control */
@@ -437,8 +514,8 @@ body.light-theme .title-bar {
 
 /* Плейлист Панель */
 .playlist-panel {
-    position: absolute; right: -320px; top: 32px; bottom: 110px;
-    width: 300px;
+    position: absolute; right: -380px; top: 32px; bottom: 110px;
+    width: 360px;
     background: var(--window-bg); backdrop-filter: blur(15px);
     border-left: 1px solid var(--border-color);
     transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -452,6 +529,9 @@ body.light-theme .title-bar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 10px; font-size: 12px; font-weight: 600; color: var(--text-color-sec);
     background: rgba(128, 128, 128, 0.05); gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 /* Поиск */
@@ -486,15 +566,23 @@ body.light-theme .title-bar {
     padding: 10px 12px; border-bottom: 1px solid rgba(128,128,128,0.05);
     font-size: 12px; color: var(--text-color-sec); cursor: pointer;
     transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;
+    gap: 10px;
 }
 .playlist-item:hover { background: rgba(128,128,128,0.1); color: var(--text-color); }
 .playlist-item.active {
     background: rgba(var(--accent-rgb), 0.15);
     color: var(--accent-color); border-left: 3px solid var(--accent-color);
 }
-.playlist-info { flex: 1; overflow: hidden; display: flex; align-items: center; }
+.playlist-info { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
 .playlist-item .track-name {
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 10px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;
+}
+.playlist-item .track-artist {
+    font-size: 11px;
+    color: var(--text-color-sec);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .playlist-actions { display: flex; gap: 8px; align-items: center; }
 .playlist-like-btn {
@@ -507,3 +595,40 @@ body.light-theme .title-bar {
 }
 .playlist-item:hover .delete-track-btn { opacity: 1; }
 .delete-track-btn:hover { color: #e81123; }
+
+.side-menu {
+    position: absolute;
+    display: flex;
+    gap: 10px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 10px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(14px);
+    z-index: 70;
+}
+
+body[data-menu-layout="bottom"] .side-menu {
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+body[data-menu-layout="left"] .side-menu {
+    top: 80px;
+    left: 16px;
+    flex-direction: column;
+}
+
+body[data-menu-layout="right"] .side-menu {
+    top: 80px;
+    right: 16px;
+    flex-direction: column;
+}
+
+body[data-menu-layout="top"] .side-menu {
+    top: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+}

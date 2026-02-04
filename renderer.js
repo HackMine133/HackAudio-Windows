@@ -58,6 +58,7 @@ const vizBarCountInput = document.getElementById('viz-bar-count');
 const showCoverVizCheckbox = document.getElementById('show-cover-viz');
 const bonusVolumeCheckbox = document.getElementById('bonus-volume');
 const whiteThemeCheckbox = document.getElementById('white-theme-mode');
+const controlsLayoutSelect = document.getElementById('controls-layout');
 
 // Modals
 const eqWindow = document.getElementById('eq-window');
@@ -129,6 +130,7 @@ let viewMode = 0;
 let isShowingLiked = false;
 let isAutoColor = false;
 let isWhiteTheme = false;
+let menuLayout = 'bottom';
 
 const eqFrequencies = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000];
 let eqGains = new Array(10).fill(0);
@@ -177,8 +179,8 @@ document.body.addEventListener('drop', (e) => {
         renderPlaylist();
         // Если ничего не играет, запустить первый добавленный
         currentMode = 'manual';
-		ctiveQueue = manualPlaylist;
-		currentIndex = manualPlaylist.indexOf(files[0]);
+        activeQueue = manualPlaylist;
+        currentIndex = manualPlaylist.indexOf(files[0]);
 
 		loadTrack(files[0]);
     }
@@ -612,9 +614,37 @@ function updateNowPlayingPosition() {
     if (!nowPlayingPosition) return;
     if (!activeQueue.length || currentIndex < 0) {
         nowPlayingPosition.textContent = '—';
+        updatePrevNextTooltips();
         return;
     }
     nowPlayingPosition.textContent = `${currentIndex + 1}/${activeQueue.length}`;
+    updatePrevNextTooltips();
+}
+
+function getTrackLabel(filePath) {
+    if (!filePath) return 'Неизвестно';
+    const meta = customMetadata[filePath] || {};
+    const title = meta.title || path.basename(filePath, path.extname(filePath));
+    const artist = meta.artist || 'Неизвестен';
+    return `${title} — ${artist}`;
+}
+
+function updatePrevNextTooltips() {
+    if (!activeQueue.length || currentIndex < 0) {
+        prevBtn.title = 'Предыдущий (←)';
+        nextBtn.title = 'Следующий (→)';
+        return;
+    }
+    const prevIndex = currentIndex - 1 < 0 ? activeQueue.length - 1 : currentIndex - 1;
+    const nextIndex = currentIndex + 1 >= activeQueue.length ? 0 : currentIndex + 1;
+    prevBtn.title = `Предыдущий: ${getTrackLabel(activeQueue[prevIndex])} (←)`;
+    nextBtn.title = `Следующий: ${getTrackLabel(activeQueue[nextIndex])} (→)`;
+}
+
+function applyControlsLayout(layout) {
+    menuLayout = layout;
+    document.body.dataset.menuLayout = layout;
+    if (controlsLayoutSelect) controlsLayoutSelect.value = layout;
 }
 
 function updateAddToPlaylistBtn(filePath) {
@@ -881,6 +911,12 @@ whiteThemeCheckbox.addEventListener('change', (e) => {
     if(isWhiteTheme) document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme');
     saveSettings();
 });
+if (controlsLayoutSelect) {
+    controlsLayoutSelect.addEventListener('change', (e) => {
+        applyControlsLayout(e.target.value);
+        saveSettings();
+    });
+}
 
 // --- Playlist Logic ---
 function togglePlaylist() {
@@ -944,7 +980,8 @@ function renderPlaylist() {
 
         li.innerHTML = `
             <div class="playlist-info">
-                <span class="track-name">${title} - ${artist}</span>
+                <span class="track-name">${title}</span>
+                <span class="track-artist">${artist}</span>
             </div>
             <div class="playlist-actions">
                 <button class="playlist-like-btn ${isLiked ? 'liked' : ''}"><i class="${isLiked ? 'fas' : 'far'} fa-heart"></i></button>
@@ -1022,7 +1059,8 @@ function saveSettings() {
         isAutoColor: isAutoColor,
         loop: loopMode,
         view: viewMode,
-        speed: speedSlider.value
+        speed: speedSlider.value,
+        menuLayout: menuLayout
     };
     localStorage.setItem('appSettings', JSON.stringify(s));
 }
@@ -1046,6 +1084,7 @@ function loadSettings() {
     }
     if (s.view) { viewMode = s.view; updateViewMode(); }
     if (s.speed) { speedSlider.value = s.speed; audio.playbackRate = s.speed; speedDisplayText.textContent = parseFloat(s.speed).toFixed(1)+'x'; }
+    if (s.menuLayout) applyControlsLayout(s.menuLayout);
 }
 
 // Init
@@ -1061,4 +1100,5 @@ ipcRenderer.on('open-file', (event, filePath) => {
 });
 
 loadSettings();
+applyControlsLayout(menuLayout);
 renderPlaylist();

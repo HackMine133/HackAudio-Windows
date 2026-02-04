@@ -9,7 +9,10 @@
 <body>
     <div class="app-container">
         <div class="title-bar">
-            <div class="title">HackAudio</div>
+            <div class="title">
+                <img class="app-logo" src="icon.ico" alt="HackAudio logo">
+                HackAudio
+            </div>
             <div class="window-controls">
                 <button id="btn-min" title="Свернуть"><i class="fas fa-minus"></i></button>
                 <button id="btn-max" title="Развернуть"><i class="fas fa-square"></i></button>
@@ -135,17 +138,20 @@
                     <label for="bonus-volume">Бонусная громкость (200%):</label>
                     <input type="checkbox" id="bonus-volume">
                 </div>
+                <div class="settings-row">
+                    <label for="controls-layout">Меню управления:</label>
+                    <select id="controls-layout" class="styled-select">
+                        <option value="bottom">Старый (Снизу)</option>
+                        <option value="left">Слева</option>
+                        <option value="top">Сверху</option>
+                        <option value="right">Справа</option>
+                    </select>
+                </div>
             </div>
         </div>
 
         <div class="controls-bar">
             
-            <div class="seek-container">
-                <span id="current-time">0:00</span>
-                <input type="range" id="seek-slider" min="0" max="100" value="0">
-                <span id="duration">0:00</span>
-            </div>
-
             <div class="controls-row">
                 <div class="now-playing-panel">
                     <div class="np-cover-container">
@@ -172,52 +178,28 @@
                 </div>
 
                 <div class="playback-controls">
-                    <button id="settings-btn" class="control-btn" title="Настройки">
-                        <i class="fas fa-cog"></i>
-                    </button>
-
-                    <button id="eq-btn" class="control-btn" title="Эквалайзер">
-                        <i class="fas fa-sliders-h"></i>
-                    </button>
-
-                    <button id="loop-btn" class="control-btn" title="Повтор: Выкл">
-                        <i class="fas fa-repeat"></i>
-                    </button>
-                    
-                    <button id="prev-btn" class="control-btn" title="Предыдущий (←)">
-                        <i class="fas fa-step-backward"></i>
-                    </button>
-                    
-                    <button id="play-pause-btn" class="control-btn big" title="Пауза/Пуск (Space)">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    
-                    <button id="next-btn" class="control-btn" title="Следующий (→)">
-                        <i class="fas fa-step-forward"></i>
-                    </button>
-
-                    <button id="toggle-view" class="control-btn" title="Сменить вид (F)">
-                        <i class="fas fa-image"></i>
-                    </button>
-
-                    <div class="speed-control-wrapper">
-                        <button id="speed-btn" class="control-btn" title="Скорость">
-                            <span id="speed-display-text" style="font-size: 10px; font-weight: bold;">1.0x</span>
+                    <div class="playback-buttons">
+                        <button id="prev-btn" class="control-btn" title="Предыдущий (←)">
+                            <i class="fas fa-step-backward"></i>
                         </button>
-                        <div id="speed-popup" class="popup-slider">
-                            <input type="range" id="speed-slider" min="0.5" max="3.0" step="0.1" value="1.0">
-                        </div>
+                        
+                        <button id="play-pause-btn" class="control-btn big" title="Пауза/Пуск (Space)">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        
+                        <button id="next-btn" class="control-btn" title="Следующий (→)">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
                     </div>
-                    
-                    <button id="toggle-playlist" class="control-btn" title="Плейлист (P)">
-                        <i class="fas fa-list"></i>
-                    </button>
+
+                    <div class="seek-container compact">
+                        <span id="current-time">0:00</span>
+                        <input type="range" id="seek-slider" min="0" max="100" value="0">
+                        <span id="duration">0:00</span>
+                    </div>
                 </div>
 
                 <div class="volume-control">
-                    <button id="add-to-playlist-btn" class="control-btn" title="Добавить в плейлист">
-                        <i class="fas fa-plus"></i>
-                    </button>
                     <button id="mute-btn" class="control-btn small" title="Без звука">
                         <i class="fas fa-volume-up"></i>
                     </button>
@@ -225,6 +207,35 @@
                     <span id="volume-text">50%</span>
                 </div>
             </div>
+        </div>
+
+        <div id="side-menu" class="side-menu layout-bottom">
+            <button id="settings-btn" class="control-btn" title="Настройки">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button id="eq-btn" class="control-btn" title="Эквалайзер">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+            <button id="loop-btn" class="control-btn" title="Повтор: Выкл">
+                <i class="fas fa-repeat"></i>
+            </button>
+            <button id="add-to-playlist-btn" class="control-btn" title="Добавить в плейлист">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button id="toggle-view" class="control-btn" title="Сменить вид (F)">
+                <i class="fas fa-image"></i>
+            </button>
+            <div class="speed-control-wrapper">
+                <button id="speed-btn" class="control-btn" title="Скорость">
+                    <span id="speed-display-text" style="font-size: 10px; font-weight: bold;">1.0x</span>
+                </button>
+                <div id="speed-popup" class="popup-slider">
+                    <input type="range" id="speed-slider" min="0.5" max="3.0" step="0.1" value="1.0">
+                </div>
+            </div>
+            <button id="toggle-playlist" class="control-btn" title="Плейлист (P)">
+                <i class="fas fa-list"></i>
+            </button>
         </div>
     </div>
 
