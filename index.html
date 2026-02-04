@@ -52,10 +52,69 @@
             <main class="content-area">
                 
                 <div id="tab-library" class="tab-content active">
+                    <section class="library-hero">
+                        <div class="hero-left">
+                            <div class="hero-badge">
+                                <i class="fas fa-headphones-alt"></i>
+                                <span>Ваш звук, ваш стиль</span>
+                            </div>
+                            <h1>Добро пожаловать в HackAudio</h1>
+                            <p>Соберите коллекцию, ускоряйте, усиливайте и наслаждайтесь каждым битом.</p>
+                            <div class="hero-actions">
+                                <button class="hero-btn primary" id="hero-add-btn">
+                                    <i class="fas fa-folder-open"></i> Импортировать треки
+                                </button>
+                                <button class="hero-btn ghost">
+                                    <i class="fas fa-bolt"></i> Микс дня
+                                </button>
+                                <button class="hero-btn ghost">
+                                    <i class="fas fa-podcast"></i> Подкасты
+                                </button>
+                            </div>
+                        </div>
+                        <div class="hero-right">
+                            <div class="now-playing-card">
+                                <div class="np-cover">
+                                    <img id="hero-cover" src="" alt="">
+                                    <i id="hero-default-icon" class="fas fa-music"></i>
+                                </div>
+                                <div class="np-info">
+                                    <span class="np-label">Сейчас играет</span>
+                                    <h3 id="hero-title">Нет трека</h3>
+                                    <p id="hero-artist">Добавьте музыку в библиотеку</p>
+                                    <div class="np-meta">
+                                        <span id="hero-album">---</span>
+                                        <span class="np-dot">•</span>
+                                        <span id="hero-status">Готов к воспроизведению</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hero-stats">
+                                <div class="stat-card">
+                                    <span class="stat-title">Усиление</span>
+                                    <strong id="hero-gain">100%</strong>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-title">Скорость</span>
+                                    <strong id="hero-speed">1.0x</strong>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-title">Режим</span>
+                                    <strong id="hero-mode">Локально</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                     <div class="header-search">
                         <div class="search-bar">
                             <i class="fas fa-search"></i>
                             <input type="text" id="search-input" placeholder="Поиск в библиотеке...">
+                        </div>
+                        <div class="quick-filters">
+                            <button class="chip active">Все</button>
+                            <button class="chip">Избранное</button>
+                            <button class="chip">Недавние</button>
+                            <button class="chip">Плейлисты</button>
                         </div>
                     </div>
                     
@@ -148,6 +207,7 @@
                     <button id="play-pause-btn" class="play-fab"><i class="fas fa-play"></i></button>
                     <button id="next-btn" class="icon-btn"><i class="fas fa-step-forward"></i></button>
                     <button id="loop-btn" class="icon-btn sm" title="Повтор"><i class="fas fa-redo"></i></button>
+                    <button class="icon-btn sm" title="Нравится"><i class="fas fa-heart"></i></button>
                 </div>
                 <div class="progress-container">
                     <span id="current-time">0:00</span>
@@ -160,6 +220,8 @@
             </div>
 
             <div class="player-volume">
+                <button class="icon-btn sm" title="Устройства"><i class="fas fa-headphones"></i></button>
+                <button class="icon-btn sm" title="Очередь"><i class="fas fa-list"></i></button>
                 <button id="mute-btn" class="icon-btn sm"><i class="fas fa-volume-up"></i></button>
                 <input type="range" id="volume-slider" min="0" max="100" value="50">
             </div>
